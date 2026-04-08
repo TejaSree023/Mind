@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindBridge — Peer Mental Health Support</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --sage:#A8BBA0;
+  --rose:#D4A5A5;
+  --sky:#A5BDD4;
+  --peach:#D4BBA5;
+  --lavender:#BBA5D4;
+  --cream:#F7F3EE;
+  --warm-white:#FDFAF7;
+  --ink:#2A2420;
+  --muted:#7A6E68;
+  --card-bg:rgba(253,250,247,0.85);
+  --border:rgba(42,36,32,0.08);
+  --radius:20px;
+  --radius-sm:12px;
+}
+
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;overflow-x:hidden}
+
+/* organic blob bg */
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse 80% 60% at 10% 20%,rgba(168,187,160,0.22) 0%,transparent 60%),
+  radial-gradient(ellipse 60% 70% at 85% 10%,rgba(165,189,212,0.18) 0%,transparent 55%),
+  radial-gradient(ellipse 70% 50% at 50% 90%,rgba(212,165,165,0.15) 0%,transparent 60%),
+  radial-gradient(ellipse 50% 80% at 90% 70%,rgba(187,165,212,0.12) 0%,transparent 50%),
+  var(--cream);pointer-events:none;z-index:0}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(247,243,238,0.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 2rem}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{font-family:'Lora',serif;font-size:1.35rem;color:var(--ink);letter-spacing:-0.02em;display:flex;align-items:center;gap:.5rem}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--sage);display:inline-block}
+.nav-links{display:flex;gap:.25rem;list-style:none}
+.nav-links a{font-size:.875rem;font-weight:500;color:var(--muted);text-decoration:none;padding:.5rem .9rem;border-radius:30px;transition:all .2s;white-space:nowrap}
+.nav-links a:hover,.nav-links a.active{color:var(--ink);background:rgba(42,36,32,0.06)}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:.5rem;border:none;background:none}
+.hamburger span{width:22px;height:2px;background:var(--ink);border-radius:2px;transition:.3s}
+.mobile-nav{display:none;position:fixed;inset:0;background:var(--warm-white);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem}
+.mobile-nav.open{display:flex}
+.mobile-nav a{font-family:'Lora',serif;font-size:2rem;color:var(--ink);text-decoration:none;opacity:.7;transition:opacity .2s}
+.mobile-nav a:hover{opacity:1}
+.close-mobile{position:absolute;top:1.5rem;right:2rem;font-size:1.5rem;background:none;border:none;cursor:pointer;color:var(--ink)}
+
+/* LAYOUT */
+.wrap{max-width:1100px;margin:0 auto;padding:3rem 2rem;position:relative;z-index:1}
+.page{display:none;animation:fadeUp .5s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:var(--card-bg);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;transition:box-shadow .25s}
+.card:hover{box-shadow:0 12px 40px rgba(42,36,32,0.08)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.75rem;border:none;border-radius:30px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:500;cursor:pointer;transition:all .2s;text-decoration:none}
+.btn-primary{background:var(--ink);color:var(--cream)}
+.btn-primary:hover{background:#3d3530;transform:translateY(-1px)}
+.btn-sage{background:var(--sage);color:#1a2e18}
+.btn-sage:hover{filter:brightness(.93);transform:translateY(-1px)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--ink)}
+.btn-ghost:hover{background:rgba(42,36,32,0.05)}
+
+/* ─── HOME ─── */
+.hero{text-align:center;padding:5rem 0 4rem}
+.hero-label{display:inline-flex;align-items:center;gap:.5rem;font-size:.8rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem;background:rgba(42,36,32,0.05);padding:.4rem 1rem;border-radius:20px}
+.hero-label span{width:6px;height:6px;border-radius:50%;background:var(--sage);display:inline-block}
+.hero h1{font-family:'Lora',serif;font-size:clamp(2.8rem,6vw,5rem);font-weight:400;line-height:1.1;letter-spacing:-0.03em;margin-bottom:1.5rem;color:var(--ink)}
+.hero h1 em{font-style:italic;color:var(--rose)}
+.hero p{font-size:1.1rem;color:var(--muted);max-width:520px;margin:0 auto 2.5rem;line-height:1.7}
+.hero-cta{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:5rem}
+.feat{padding:1.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card-bg);transition:all .25s}
+.feat:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(42,36,32,0.08)}
+.feat-icon{font-size:1.75rem;margin-bottom:1rem}
+.feat h3{font-family:'Lora',serif;font-size:1.05rem;font-weight:500;margin-bottom:.5rem}
+.feat p{font-size:.875rem;color:var(--muted);line-height:1.6}
+
+/* ─── DASHBOARD ─── */
+.dash-header{display:flex;align-items:baseline;gap:.75rem;margin-bottom:2rem}
+.dash-header h2{font-family:'Lora',serif;font-size:1.8rem;font-weight:400}
+.dash-header span{font-size:.875rem;color:var(--muted)}
+.compose{margin-bottom:2rem}
+.compose textarea{width:100%;min-height:100px;padding:1.25rem;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--warm-white);font-family:'DM Sans',sans-serif;font-size:1rem;color:var(--ink);resize:none;transition:border-color .2s}
+.compose textarea:focus{outline:none;border-color:rgba(42,36,32,0.25)}
+.compose-footer{display:flex;align-items:center;justify-content:space-between;margin-top:.75rem;flex-wrap:wrap;gap:.5rem}
+.mood-tags{display:flex;gap:.5rem;flex-wrap:wrap}
+.mood-tag{padding:.35rem .85rem;border-radius:20px;font-size:.8rem;font-weight:500;border:1px solid var(--border);background:transparent;cursor:pointer;transition:all .2s;color:var(--muted)}
+.mood-tag:hover,.mood-tag.active{border-color:var(--ink);color:var(--ink);background:rgba(42,36,32,0.06)}
+.feed{display:flex;flex-direction:column;gap:1rem}
+.post{padding:1.5rem}
+.post-meta{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+.avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:600;flex-shrink:0}
+.av-sage{background:rgba(168,187,160,0.35);color:#2d4a29}
+.av-rose{background:rgba(212,165,165,0.35);color:#5c2828}
+.av-sky{background:rgba(165,189,212,0.35);color:#1e3d5c}
+.av-lav{background:rgba(187,165,212,0.35);color:#3d2a5c}
+.post-nick{font-weight:500;font-size:.9rem}
+.post-time{font-size:.8rem;color:var(--muted);margin-left:auto}
+.post-text{font-size:.975rem;line-height:1.65;color:var(--ink);margin-bottom:1rem}
+.reactions{display:flex;gap:.5rem;flex-wrap:wrap}
+.rxn{padding:.4rem 1rem;border:1px solid var(--border);border-radius:20px;font-size:.82rem;font-weight:500;background:transparent;cursor:pointer;transition:all .2s;color:var(--muted)}
+.rxn:hover{border-color:var(--ink);color:var(--ink)}
+.rxn.rxn-heart:hover,.rxn.rxn-heart.active{background:rgba(212,165,165,0.2);border-color:var(--rose);color:#8a3a3a}
+.rxn.rxn-rel:hover,.rxn.rxn-rel.active{background:rgba(168,187,160,0.2);border-color:var(--sage);color:#2d4a29}
+.dash-quick{display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap}
+
+/* ─── CHAT ─── */
+.chat-wrap{display:flex;flex-direction:column;height:62vh;min-height:400px}
+.safety-banner{background:rgba(168,187,160,0.2);border:1px solid rgba(168,187,160,0.4);border-radius:var(--radius-sm);padding:.85rem 1.25rem;margin-bottom:1.5rem;font-size:.85rem;color:#2d4a29;display:flex;align-items:center;gap:.5rem}
+.chat-msgs{flex:1;overflow-y:auto;padding:1rem;background:rgba(42,36,32,0.03);border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:1rem;display:flex;flex-direction:column;gap:.75rem}
+.msg{max-width:72%;padding:.85rem 1.15rem;border-radius:16px;font-size:.925rem;line-height:1.55}
+.msg.peer{background:var(--warm-white);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+.msg.own{background:var(--ink);color:var(--cream);align-self:flex-end;border-bottom-right-radius:4px}
+.msg-sender{font-size:.75rem;font-weight:500;margin-bottom:.3rem;opacity:.65}
+.chat-input-row{display:flex;gap:.75rem;align-items:center}
+.chat-input-row input{flex:1;padding:.85rem 1.25rem;border:1px solid var(--border);border-radius:30px;font-family:'DM Sans',sans-serif;font-size:.9rem;background:var(--warm-white);color:var(--ink)}
+.chat-input-row input:focus{outline:none;border-color:rgba(42,36,32,0.3)}
+.quick-replies{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem}
+.qr{padding:.4rem .9rem;border:1px solid var(--border);border-radius:20px;font-size:.8rem;cursor:pointer;background:transparent;color:var(--muted);transition:all .2s}
+.qr:hover{border-color:var(--sage);color:#2d4a29;background:rgba(168,187,160,0.1)}
+.online-pill{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--muted);padding:.3rem .8rem;border:1px solid var(--border);border-radius:20px;margin-bottom:1rem}
+.online-pill span{width:6px;height:6px;border-radius:50%;background:#7bc67f;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ─── MOOD TRACKER ─── */
+.mood-section{text-align:center;padding:2rem 0}
+.mood-section h2{font-family:'Lora',serif;font-size:1.8rem;font-weight:400;margin-bottom:.5rem}
+.mood-section p{color:var(--muted);font-size:.9rem;margin-bottom:2rem}
+.mood-grid{display:flex;justify-content:center;gap:1.25rem;flex-wrap:wrap;margin-bottom:2rem}
+.mood-btn{display:flex;flex-direction:column;align-items:center;gap:.5rem;padding:1.25rem 1.75rem;border:2px solid var(--border);border-radius:var(--radius);background:var(--card-bg);cursor:pointer;transition:all .25s;min-width:110px}
+.mood-btn .emoji{font-size:2.5rem}
+.mood-btn .label{font-size:.8rem;font-weight:500;color:var(--muted)}
+.mood-btn:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(42,36,32,.1)}
+.mood-btn.selected-happy{border-color:var(--sage);background:rgba(168,187,160,0.15)}
+.mood-btn.selected-okay{border-color:var(--peach);background:rgba(212,187,165,0.15)}
+.mood-btn.selected-sad{border-color:var(--sky);background:rgba(165,189,212,0.15)}
+.mood-btn.selected-stressed{border-color:var(--lavender);background:rgba(187,165,212,0.15)}
+.chart-card{padding:2rem}
+.chart-card h3{font-family:'Lora',serif;font-size:1.1rem;font-weight:500;margin-bottom:1.5rem}
+.chart-wrap{position:relative;height:260px}
+.history-list{list-style:none;display:flex;flex-direction:column;gap:.6rem;margin-top:1.5rem}
+.history-item{display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;border-radius:var(--radius-sm);background:rgba(42,36,32,0.03);font-size:.875rem}
+.history-item .h-day{color:var(--muted);min-width:80px}
+.history-item .h-mood{font-weight:500}
+.mood-streak{display:inline-flex;align-items:center;gap:.5rem;background:rgba(168,187,160,0.2);border:1px solid rgba(168,187,160,0.4);border-radius:20px;padding:.4rem 1rem;font-size:.82rem;color:#2d4a29;margin-bottom:1.5rem}
+
+/* ─── RESOURCES ─── */
+.resources-intro{font-family:'Lora',serif;font-size:1.8rem;font-weight:400;margin-bottom:.5rem}
+.resources-sub{color:var(--muted);margin-bottom:2.5rem}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin-bottom:2rem}
+.res-card{padding:1.75rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--card-bg);transition:all .25s;cursor:pointer}
+.res-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(42,36,32,.08)}
+.res-icon{font-size:1.5rem;margin-bottom:.85rem}
+.res-card h3{font-family:'Lora',serif;font-size:1rem;font-weight:500;margin-bottom:.5rem}
+.res-card p{font-size:.855rem;color:var(--muted);line-height:1.6}
+.res-tag{display:inline-block;font-size:.72rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:.25rem .6rem;border-radius:6px;margin-bottom:.6rem}
+.tag-stress{background:rgba(212,187,165,0.3);color:#6b3a14}
+.tag-anxiety{background:rgba(165,189,212,0.3);color:#14416b}
+.tag-lonely{background:rgba(187,165,212,0.3);color:#3a146b}
+.tag-sleep{background:rgba(168,187,160,0.3);color:#14552a}
+.emergency-card{background:rgba(212,165,165,0.12);border:1px solid rgba(212,165,165,0.4);border-radius:var(--radius);padding:2rem;margin-bottom:2rem}
+.emergency-card h3{font-family:'Lora',serif;font-size:1.2rem;margin-bottom:1rem;color:#7a2828}
+.hotlines{display:flex;flex-direction:column;gap:.75rem}
+.hotline{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.25rem;background:var(--warm-white);border-radius:var(--radius-sm);flex-wrap:wrap;gap:.5rem}
+.hotline-name{font-weight:500;font-size:.9rem}
+.hotline-num{font-family:'Lora',serif;font-size:1.05rem;letter-spacing:.02em;color:var(--rose)}
+.breathing{border-radius:var(--radius);border:1px solid var(--border);padding:2rem;background:var(--card-bg);text-align:center}
+.breathing h3{font-family:'Lora',serif;font-size:1.2rem;font-weight:500;margin-bottom:.5rem}
+.breathing p{color:var(--muted);font-size:.875rem;margin-bottom:1.5rem}
+.breath-ring{width:120px;height:120px;border-radius:50%;border:3px solid var(--sage);margin:0 auto 1.5rem;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:500;color:#2d4a29;transition:all 4s ease;background:rgba(168,187,160,0.1)}
+.breath-ring.inhale{transform:scale(1.5);background:rgba(168,187,160,0.2)}
+.breath-ring.exhale{transform:scale(1);background:rgba(168,187,160,0.05)}
+.breath-instruction{font-size:1rem;font-weight:500;color:var(--muted);margin-bottom:1rem;min-height:1.5rem}
+
+/* tips */
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:1.5rem}
+.tip{padding:1.25rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--card-bg);font-size:.855rem}
+.tip .tip-icon{font-size:1.25rem;margin-bottom:.5rem}
+.tip p{color:var(--muted);line-height:1.55}
+
+/* SECTION HEADINGS */
+.section-label{font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* RESPONSIVE */
+@media(max-width:700px){
+  .nav-links{display:none}
+  .hamburger{display:flex}
+  .wrap{padding:2rem 1rem}
+  .hero{padding:3rem 0 2.5rem}
+  .post-time{display:none}
+  .msg{max-width:88%}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo"><span class="logo-dot"></span>MindBridge</div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#" onclick="show('home')" id="nav-home" class="active">Home</a></li>
+      <li><a href="#" onclick="show('dashboard')" id="nav-dashboard">Dashboard</a></li>
+      <li><a href="#" onclick="show('chat')" id="nav-chat">Chat</a></li>
+      <li><a href="#" onclick="show('mood')" id="nav-mood">Mood Tracker</a></li>
+      <li><a href="#" onclick="show('resources')" id="nav-resources">Resources</a></li>
+    </ul>
+    <div class="hamburger" onclick="toggleMobile()"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+
+<div class="mobile-nav" id="mobileNav">
+  <button class="close-mobile" onclick="toggleMobile()">✕</button>
+  <a href="#" onclick="show('home');toggleMobile()">Home</a>
+  <a href="#" onclick="show('dashboard');toggleMobile()">Dashboard</a>
+  <a href="#" onclick="show('chat');toggleMobile()">Chat</a>
+  <a href="#" onclick="show('mood');toggleMobile()">Mood Tracker</a>
+  <a href="#" onclick="show('resources');toggleMobile()">Resources</a>
+</div>
+
+<!-- ═══════════════ HOME ═══════════════ -->
+<div class="wrap">
+<section id="home" class="page active">
+  <div class="hero">
+    <div class="hero-label"><span></span> Anonymous & Free</div>
+    <h1>Mental health<br><em>matters</em></h1>
+    <p>A calm, anonymous corner of the internet where you can share what you're feeling, find people who understand, and take small steps forward.</p>
+    <div class="hero-cta">
+      <button class="btn btn-primary" onclick="show('dashboard')">Get started →</button>
+      <button class="btn btn-ghost" onclick="show('resources')">Explore resources</button>
+    </div>
+  </div>
+
+  <div class="section-label">What we offer</div>
+  <div class="features">
+    <div class="feat">
+      <div class="feat-icon">💭</div>
+      <h3>Share feelings</h3>
+      <p>Post anonymously. No judgement, no algorithms — just real people listening.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🤝</div>
+      <h3>Peer support</h3>
+      <p>Connect with others who've been there. Sometimes being understood is everything.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📈</div>
+      <h3>Mood tracking</h3>
+      <p>Notice patterns, celebrate small wins, and see how far you've come.</p>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📚</div>
+      <h3>Resources</h3>
+      <p>Articles, breathing exercises, and crisis lines — whenever you need them.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ DASHBOARD ═══════════════ -->
+<section id="dashboard" class="page">
+  <div class="dash-header">
+    <h2>Community</h2>
+    <span>Anonymous · Safe · Supported</span>
+  </div>
+
+  <div class="card compose">
+    <div class="section-label" style="margin-bottom:1rem">How are you feeling today?</div>
+    <textarea id="postText" placeholder="Share what's on your mind… you don't have to go through this alone."></textarea>
+    <div class="compose-footer">
+      <div class="mood-tags">
+        <button class="mood-tag" onclick="toggleTag(this,'😌 Calm')">😌 Calm</button>
+        <button class="mood-tag" onclick="toggleTag(this,'😔 Sad')">😔 Sad</button>
+        <button class="mood-tag" onclick="toggleTag(this,'😰 Anxious')">😰 Anxious</button>
+        <button class="mood-tag" onclick="toggleTag(this,'😤 Frustrated')">😤 Frustrated</button>
+        <button class="mood-tag" onclick="toggleTag(this,'🥺 Lonely')">🥺 Lonely</button>
+      </div>
+      <button class="btn btn-primary" onclick="createPost()">Post anonymously</button>
+    </div>
+  </div>
+
+  <div class="section-label">Recent posts</div>
+  <div class="feed" id="feed">
+    <div class="card post">
+      <div class="post-meta"><div class="avatar av-sage">HS</div><span class="post-nick">HopefulSoul</span><span class="post-time">2 h ago</span></div>
+      <div class="post-text">Feeling overwhelmed with work lately. I've been staying up till 2am most nights and I can't find the off switch. Does anyone else struggle with this?</div>
+      <div class="reactions">
+        <button class="rxn rxn-heart" onclick="react(this,'❤️',12)">❤️ 12</button>
+        <button class="rxn rxn-rel" onclick="react(this,'🌿',8)">🌿 I relate · 8</button>
+        <button class="rxn" onclick="replyTo('HopefulSoul')">💬 Reply</button>
+      </div>
+    </div>
+    <div class="card post">
+      <div class="post-meta"><div class="avatar av-rose">QS</div><span class="post-nick">QuietStorm</span><span class="post-time">5 h ago</span></div>
+      <div class="post-text">One of those heavy days where nothing feels right. I'm grateful this space exists. Sometimes just writing it out helps.</div>
+      <div class="reactions">
+        <button class="rxn rxn-heart" onclick="react(this,'❤️',23)">❤️ 23</button>
+        <button class="rxn rxn-rel" onclick="react(this,'🌿',15)">🌿 I relate · 15</button>
+        <button class="rxn" onclick="replyTo('QuietStorm')">💬 Reply</button>
+      </div>
+    </div>
+    <div class="card post">
+      <div class="post-meta"><div class="avatar av-sky">MR</div><span class="post-nick">MorningRain</span><span class="post-time">Yesterday</span></div>
+      <div class="post-text">Had my first therapy session today after putting it off for two years. It was scary, but I'm really glad I went. Small steps.</div>
+      <div class="reactions">
+        <button class="rxn rxn-heart" onclick="react(this,'❤️',41)">❤️ 41</button>
+        <button class="rxn rxn-rel" onclick="react(this,'🌿',19)">🌿 I relate · 19</button>
+        <button class="rxn" onclick="replyTo('MorningRain')">💬 Reply</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-quick">
+    <button class="btn btn-sage" onclick="show('chat')">💬 Join chat</button>
+    <button class="btn btn-ghost" onclick="show('mood')">📊 Track mood</button>
+  </div>
+</section>
+
+<!-- ═══════════════ CHAT ═══════════════ -->
+<section id="chat" class="page">
+  <h2 style="font-family:'Lora',serif;font-size:1.8rem;font-weight:400;margin-bottom:.5rem">Peer chat</h2>
+  <p style="color:var(--muted);font-size:.875rem;margin-bottom:1.25rem">Anonymous · real-time · supportive</p>
+
+  <div class="safety-banner">🌿 <strong>Safe space reminder:</strong> Be kind, be honest. If someone seems to be in crisis, encourage them to contact a helpline.</div>
+
+  <div class="card" style="padding:1.5rem">
+    <div class="online-pill"><span></span> 14 people here right now</div>
+    <div class="chat-wrap">
+      <div class="chat-msgs" id="chatMsgs">
+        <div class="msg peer"><div class="msg-sender">Community</div>Welcome 💙 You're safe here. Share whatever's on your mind.</div>
+        <div class="msg peer"><div class="msg-sender">Listener · Willow</div>Hi everyone! Here to support. How's your day going?</div>
+        <div class="msg peer"><div class="msg-sender">SleepyFox</div>Not great honestly. Can't stop spiraling about tomorrow. 😔</div>
+        <div class="msg peer"><div class="msg-sender">Listener · Willow</div>I hear you. Spiraling is exhausting. Want to talk through it? You don't have to face it alone.</div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInput" placeholder="Type something… or just say hi 👋" onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="btn btn-primary" onclick="sendMsg()">Send</button>
+      </div>
+      <div class="quick-replies">
+        <button class="qr" onclick="useQR('I hear you 💙')">I hear you 💙</button>
+        <button class="qr" onclick="useQR('You\'re not alone')">You're not alone</button>
+        <button class="qr" onclick="useQR('That sounds really hard')">That sounds really hard</button>
+        <button class="qr" onclick="useQR('Thank you for sharing')">Thank you for sharing</button>
+        <button class="qr" onclick="useQR('Sending warmth your way 🌿')">Sending warmth 🌿</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ MOOD TRACKER ═══════════════ -->
+<section id="mood" class="page">
+  <div class="card">
+    <div class="mood-section">
+      <h2>How are you feeling?</h2>
+      <p>Check in with yourself. No wrong answers.</p>
+      <div class="mood-streak">🔥 3-day streak — keep going!</div>
+      <div class="mood-grid">
+        <button class="mood-btn" onclick="selectMood(this,'Happy','selected-happy','😊')" data-m="Happy">
+          <span class="emoji">😊</span><span class="label">Happy</span>
+        </button>
+        <button class="mood-btn" onclick="selectMood(this,'Okay','selected-okay','😐')" data-m="Okay">
+          <span class="emoji">😐</span><span class="label">Okay</span>
+        </button>
+        <button class="mood-btn" onclick="selectMood(this,'Sad','selected-sad','😢')" data-m="Sad">
+          <span class="emoji">😢</span><span class="label">Sad</span>
+        </button>
+        <button class="mood-btn" onclick="selectMood(this,'Stressed','selected-stressed','😰')" data-m="Stressed">
+          <span class="emoji">😰</span><span class="label">Stressed</span>
+        </button>
+      </div>
+      <button class="btn btn-primary" onclick="submitMood()" id="moodSubmit" style="opacity:.5;pointer-events:none">Log mood</button>
+    </div>
+  </div>
+
+  <div class="card chart-card" style="margin-top:1.5rem">
+    <h3>This week</h3>
+    <div class="chart-wrap">
+      <canvas id="moodChart" role="img" aria-label="Weekly mood chart showing mood levels from Monday to Sunday"></canvas>
+    </div>
+    <div class="section-label" style="margin-top:2rem">History</div>
+    <ul class="history-list" id="historyList">
+      <li class="history-item"><span class="h-day">Mon</span><span class="h-mood">😊 Happy</span></li>
+      <li class="history-item"><span class="h-day">Tue</span><span class="h-mood">😐 Okay</span></li>
+      <li class="history-item"><span class="h-day">Wed</span><span class="h-mood">😢 Sad</span></li>
+      <li class="history-item"><span class="h-day">Thu</span><span class="h-mood">😊 Happy</span></li>
+      <li class="history-item"><span class="h-day">Fri</span><span class="h-mood">😰 Stressed</span></li>
+      <li class="history-item"><span class="h-day">Sat</span><span class="h-mood">😊 Happy</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ RESOURCES ═══════════════ -->
+<section id="resources" class="page">
+  <h2 class="resources-intro">Resources</h2>
+  <p class="resources-sub">Guides, articles, and tools to support your mental well-being.</p>
+
+  <div class="section-label">Articles</div>
+  <div class="res-grid">
+    <div class="res-card">
+      <div class="res-tag tag-stress">Stress</div>
+      <div class="res-icon">🧘</div>
+      <h3>Managing everyday stress</h3>
+      <p>Practical strategies to reduce overwhelm — from time-blocking to body-based practices.</p>
+    </div>
+    <div class="res-card">
+      <div class="res-tag tag-anxiety">Anxiety</div>
+      <div class="res-icon">🌊</div>
+      <h3>Understanding anxiety</h3>
+      <p>What anxiety actually is, why it happens, and small things that genuinely help.</p>
+    </div>
+    <div class="res-card">
+      <div class="res-tag tag-lonely">Loneliness</div>
+      <div class="res-icon">🕯️</div>
+      <h3>When you feel alone</h3>
+      <p>You're not the only one. Ways to find connection even when it feels impossible.</p>
+    </div>
+    <div class="res-card">
+      <div class="res-tag tag-sleep">Sleep</div>
+      <div class="res-icon">🌙</div>
+      <h3>Sleep & mental health</h3>
+      <p>The deep link between rest and emotional resilience, and how to improve both.</p>
+    </div>
+  </div>
+
+  <div class="section-label">Self-care tips</div>
+  <div class="tips-grid">
+    <div class="tip"><div class="tip-icon">☀️</div><p>Start mornings with 5 minutes of quiet before checking your phone.</p></div>
+    <div class="tip"><div class="tip-icon">🚶</div><p>A 10-minute walk outside can shift your mood more than you'd expect.</p></div>
+    <div class="tip"><div class="tip-icon">💧</div><p>Dehydration often mimics anxiety. Keep water nearby.</p></div>
+    <div class="tip"><div class="tip-icon">✏️</div><p>Write down three things — big or tiny — that went okay today.</p></div>
+    <div class="tip"><div class="tip-icon">📵</div><p>Set a phone boundary 30 minutes before bed. Your brain will thank you.</p></div>
+    <div class="tip"><div class="tip-icon">🫂</div><p>Reach out to one person this week — even just a message counts.</p></div>
+  </div>
+
+  <div class="emergency-card" style="margin-top:2rem">
+    <h3>🆘 Crisis & emergency contacts</h3>
+    <div class="hotlines">
+      <div class="hotline"><span class="hotline-name">iCall (India)</span><span class="hotline-num">9152987821</span></div>
+      <div class="hotline"><span class="hotline-name">Vandrevala Foundation (24/7)</span><span class="hotline-num">1860-2662-345</span></div>
+      <div class="hotline"><span class="hotline-name">NIMHANS (Bangalore)</span><span class="hotline-num">080-46110007</span></div>
+      <div class="hotline"><span class="hotline-name">Crisis Text Line (Global)</span><span class="hotline-num">Text HOME to 741741</span></div>
+      <div class="hotline"><span class="hotline-name">Samaritans (India)</span><span class="hotline-num">044-33001100</span></div>
+    </div>
+    <p style="font-size:.8rem;color:#8a3a3a;margin-top:1rem">If you or someone you know is in immediate danger, please call emergency services (112).</p>
+  </div>
+
+  <div class="section-label" style="margin-top:2rem">Breathing exercise</div>
+  <div class="breathing">
+    <h3>Box breathing</h3>
+    <p>Used by therapists and athletes alike to calm the nervous system in minutes.</p>
+    <div class="breath-ring" id="breathRing">Ready</div>
+    <div class="breath-instruction" id="breathInst">Press start to begin</div>
+    <button class="btn btn-sage" id="breathBtn" onclick="startBreathing()">Start breathing exercise</button>
+  </div>
+</section>
+</div><!-- /wrap -->
+
+<script>
+// ─── NAV ───
+function show(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const nav=document.getElementById('nav-'+id);
+  if(nav)nav.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  return false;
+}
+function toggleMobile(){
+  document.getElementById('mobileNav').classList.toggle('open');
+}
+
+// ─── DASHBOARD ───
+let activeTag='';
+function toggleTag(el,tag){
+  document.querySelectorAll('.mood-tag').forEach(t=>t.classList.remove('active'));
+  if(activeTag===tag){activeTag='';return;}
+  el.classList.add('active');activeTag=tag;
+}
+const avClasses=['av-sage','av-rose','av-sky','av-lav'];
+const nicknames=['CalmWave','SilverFern','WarmLight','GentleRiver','QuietMoss','TideWatcher'];
+function createPost(){
+  const txt=document.getElementById('postText').value.trim();
+  if(!txt)return;
+  const feed=document.getElementById('feed');
+  const nick=nicknames[Math.floor(Math.random()*nicknames.length)];
+  const av=avClasses[Math.floor(Math.random()*avClasses.length)];
+  const initials=nick.split(/(?=[A-Z])/).map(w=>w[0]).join('').slice(0,2);
+  const tag=activeTag?` <span style="font-size:.8rem;color:var(--muted)">${activeTag}</span>`:'';
+  const post=document.createElement('div');
+  post.className='card post';
+  post.style.animation='fadeUp .4s ease';
+  post.innerHTML=`
+    <div class="post-meta"><div class="avatar ${av}">${initials}</div><span class="post-nick">${nick}</span><span class="post-time">Just now</span></div>
+    <div class="post-text">${txt}${tag}</div>
+    <div class="reactions">
+      <button class="rxn rxn-heart" onclick="react(this,'❤️',0)">❤️ 0</button>
+      <button class="rxn rxn-rel" onclick="react(this,'🌿',0)">🌿 I relate · 0</button>
+      <button class="rxn" onclick="replyTo('${nick}')">💬 Reply</button>
+    </div>`;
+  feed.prepend(post);
+  document.getElementById('postText').value='';
+  activeTag='';
+  document.querySelectorAll('.mood-tag').forEach(t=>t.classList.remove('active'));
+}
+function react(btn,emoji,count){
+  btn.classList.toggle('active');
+  const n=parseInt(btn.textContent.replace(/\D+/g,''))||count;
+  btn.textContent=btn.classList.contains('active')?`${emoji} ${n+1}`:`${emoji} ${n-1}`;
+  if(emoji==='🌿')btn.textContent=btn.classList.contains('active')?`🌿 I relate · ${n+1}`:`🌿 I relate · ${n-1}`;
+}
+function replyTo(nick){
+  show('chat');
+  document.getElementById('chatInput').value=`@${nick} `;
+  document.getElementById('chatInput').focus();
+}
+
+// ─── CHAT ───
+const responses=['You\'re not alone in this. 💙','That takes real courage to share. Thank you.','I hear you. One moment at a time.','Sending warmth your way. 🌿','It\'s okay to not be okay right now.'];
+function sendMsg(){
+  const inp=document.getElementById('chatInput');
+  const txt=inp.value.trim();
+  if(!txt)return;
+  const msgs=document.getElementById('chatMsgs');
+  const m=document.createElement('div');
+  m.className='msg own';m.textContent=txt;
+  msgs.appendChild(m);
+  inp.value='';
+  msgs.scrollTop=msgs.scrollHeight;
+  setTimeout(()=>{
+    const r=document.createElement('div');
+    r.className='msg peer';
+    r.innerHTML=`<div class="msg-sender">Listener · Willow</div>${responses[Math.floor(Math.random()*responses.length)]}`;
+    msgs.appendChild(r);
+    msgs.scrollTop=msgs.scrollHeight;
+  },900+Math.random()*800);
+}
+function useQR(txt){document.getElementById('chatInput').value=txt;document.getElementById('chatInput').focus();}
+
+// ─── MOOD TRACKER ───
+let selectedMood=null;
+function selectMood(el,mood,cls,emoji){
+  document.querySelectorAll('.mood-btn').forEach(b=>b.className='mood-btn');
+  el.className='mood-btn '+cls;
+  selectedMood={mood,emoji};
+  const sb=document.getElementById('moodSubmit');
+  sb.style.opacity='1';sb.style.pointerEvents='auto';
+}
+const moodHistory=['Happy','Okay','Sad','Happy','Stressed','Happy'];
+function submitMood(){
+  if(!selectedMood)return;
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const today=days[new Date().getDay()===0?6:new Date().getDay()-1];
+  const list=document.getElementById('historyList');
+  const li=document.createElement('li');
+  li.className='history-item';
+  li.innerHTML=`<span class="h-day">${today}</span><span class="h-mood">${selectedMood.emoji} ${selectedMood.mood} — Today</span>`;
+  list.prepend(li);
+  moodHistory.push(selectedMood.mood);
+  updateChart();
+  document.querySelectorAll('.mood-btn').forEach(b=>b.className='mood-btn');
+  selectedMood=null;
+  const sb=document.getElementById('moodSubmit');
+  sb.style.opacity='.5';sb.style.pointerEvents='none';
+}
+const moodVal={Happy:4,Okay:3,Sad:2,Stressed:1};
+let moodChartInst;
+function updateChart(){
+  const data=moodHistory.slice(-7).map(m=>moodVal[m]||3);
+  if(moodChartInst){moodChartInst.data.datasets[0].data=data;moodChartInst.update();return;}
+  moodChartInst=new Chart(document.getElementById('moodChart'),{
+    type:'line',
+    data:{
+      labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].slice(0,data.length),
+      datasets:[{
+        label:'Mood',data,
+        borderColor:'#A8BBA0',backgroundColor:'rgba(168,187,160,0.12)',
+        borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#A8BBA0',
+        tension:.45,fill:true
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      scales:{
+        y:{min:0,max:5,ticks:{callback:v=>({1:'😰',2:'😢',3:'😐',4:'😊'}[v]||''),font:{size:14}},grid:{color:'rgba(42,36,32,0.06)'}},
+        x:{grid:{display:false}}
+      },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>({1:'Stressed',2:'Sad',3:'Okay',4:'Happy'}[ctx.raw]||'')}}}
+    }
+  });
+}
+updateChart();
+
+// ─── BREATHING ───
+let breathRunning=false,breathTimeout;
+const phases=[{label:'Inhale…',dur:4000,cls:'inhale'},{label:'Hold…',dur:4000,cls:''},{label:'Exhale…',dur:4000,cls:'exhale'},{label:'Hold…',dur:4000,cls:''}];
+let phaseIdx=0;
+function startBreathing(){
+  if(breathRunning){
+    clearTimeout(breathTimeout);breathRunning=false;
+    document.getElementById('breathBtn').textContent='Start breathing exercise';
+    document.getElementById('breathInst').textContent='Press start to begin';
+    document.getElementById('breathRing').className='breath-ring';
+    document.getElementById('breathRing').textContent='Ready';
+    return;
+  }
+  breathRunning=true;
+  document.getElementById('breathBtn').textContent='Stop';
+  phaseIdx=0;runPhase();
+}
+function runPhase(){
+  if(!breathRunning)return;
+  const p=phases[phaseIdx%4];
+  const ring=document.getElementById('breathRing');
+  const inst=document.getElementById('breathInst');
+  ring.className='breath-ring '+(p.cls||'');
+  ring.textContent=p.label.replace('…','');
+  inst.textContent=p.label;
+  phaseIdx++;
+  breathTimeout=setTimeout(runPhase,p.dur);
+}
+</script>
+</body>
+</html>
